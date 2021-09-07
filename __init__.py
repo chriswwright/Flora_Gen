@@ -28,9 +28,10 @@ import bpy
 #addon imports
 from . hello_world_panel import FLORA_GEN_PT_HelloWorldPanel
 from . hello_world_op import FLORA_GEN_PT_HelloWorldOperator
+from . cylinder_op import FLORA_GEN_PT_CylinderOperator
 
-classes = [FLORA_GEN_PT_HelloWorldPanel, FLORA_GEN_PT_HelloWorldOperator]
-classes_strings = ["FLORA_GEN_PT_HelloWorld", "wm.hello_world_operator"]
+classes = [FLORA_GEN_PT_HelloWorldPanel, FLORA_GEN_PT_HelloWorldOperator, FLORA_GEN_PT_CylinderOperator]
+classes_strings = ["FLORA_GEN_PT_HelloWorld", "wm.hello_world_operator", "wm.cylinder_operator"]
 
 def register():
     for cls in classes:
