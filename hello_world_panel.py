@@ -13,6 +13,7 @@ class FLORA_GEN_PT_HelloWorldPanel(bpy.types.Panel):
         col = self.layout.column(align=True)
         col.operator("wm.hello_world_operator")
         col.operator("wm.cylinder_operator")
+        col.operator("wm.stem_operator")
     
     def invoke(self, context, event):
         wm = context.window_manager

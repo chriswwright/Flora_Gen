@@ -1,8 +1,10 @@
 import bpy
 import math
+import random
 from functools import lru_cache
 
 DEFAULT_POS = [0, 0, 0]
+DEFAULT_TOP_POS = [0, 0, 1]
 DEFAULT_EUC = [0, 0, 0]
 DEFAULT_SCALE = [1, 1, 1]
 DEFAULT_RAD = 1
@@ -21,8 +23,7 @@ class Point():
             return False
         return self.x == o.x and self.y == o.y and self.z == o.z
 class Object_Metadata():
-    def __init__(self, id, name, pos, euc, scale) -> None:
-        self.id = InterruptedError
+    def __init__(self, name = "Temp", pos = DEFAULT_POS, euc = DEFAULT_EUC, scale = DEFAULT_SCALE) -> None:
         self.name = name
         self.position = pos
         self.rotation = euc
@@ -43,52 +44,117 @@ def add_mesh(name = "Test", verts = [], faces = [], edges=[], col_name="Collecti
     mesh = bpy.data.meshes.new(name)
     obj = bpy.data.objects.new(mesh.name, mesh)
     
-    print(verts)
-    print(faces)
-    print(edges)
+    #print(verts)
+    #print(faces)
+    #print(edges)
     mesh.from_pydata(verts, edges, faces)
     scene = bpy.context.scene
     scene.collection.objects.link(obj)
-    obj.select_set(True)  
-    
-def mutate_mesh(position = DEFAULT_POS, euclidian = DEFAULT_EUC, scale = DEFAULT_SCALE):
-    pass
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    return obj
+
+def mutate_mesh(o_md = Object_Metadata()):
+    bpy.context.object.location = o_md.position
+    euler = [i/180.0*math.pi for i in o_md.rotation]
+    bpy.context.object.rotation_euler = euler
+    bpy.context.object.scale = o_md.scale
 
 @lru_cache
-def rad_to_point(deg):
-    rad = deg/180.0
-    y = math.sin(rad)
-    x = math.cos(rad)
-    return Point(x, y)
+def rad_to_point(deg, radius=1, height=0, rotation=0):
+    rad = deg/180.0*math.pi
+    rotation = rotation/180.0*math.pi
+    x = math.sin(rad) * radius
+    y = math.cos(rad) * radius
+    z = height - math.sin(rotation)*y
+    y = math.cos(rotation)*y
+    return Point(x, y, z)
 
-def generate_circle(num_edges, height):
+def stem_gen(name = "Stem", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1, gravity=.1, vel_cutoff = -.4, random_bool = False, seed = 0):
+    if(seed == 0):
+        random.seed()
+    else:
+        random.seed(seed)
+    bpy.ops.object.select_all(action='DESELECT')
+    if vert_vel == 0:
+        vet_vel = .001
+    point_list = []
+    cylinder_list = []
+    y_loc = 0
+    z_loc = 0
+    temp_vel = vert_vel
+    count = 0
+    rot = 0
+    top_rad = base_radius
+    while temp_vel > vel_cutoff:
+        temp_vel -= gravity
+        count+=1
+    if(vel_cutoff < 0):
+        max_rot = 180*-vel_cutoff/vert_vel
+    else:
+        max_rot = 90-(90*vel_cutoff/vert_vel)
+    rot_increment = max_rot/(count+1)
+    scale_decrement = base_radius/(count+1)
+    while vert_vel > vel_cutoff:
+        point_list.append(Point(0, y_loc, z_loc))
+        temp = [0, y_loc, z_loc]
+        y_loc += hor_vel
+        z_loc += vert_vel
+        vert_vel -= gravity
+        base_rad = top_rad
+        top_rad = (top_rad - scale_decrement) if top_rad - scale_decrement > 0 else 0
+        temp_rot = rot
+        rot +=rot_increment
+        cyl = cylinder_gen("Cylinder", num_edges, [0-temp[0], y_loc-temp[1], z_loc-temp[2]], top_rad, base_rad, rot, temp_rot, Object_Metadata("Cylinder", temp, DEFAULT_EUC, DEFAULT_SCALE))
+        cyl.select_set(False)
+        cylinder_list.append(cyl)
+    for cyl in cylinder_list:
+        cyl.select_set(True)
+    bpy.ops.object.join()
+    bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
+    bpy.context.scene.cursor.rotation_euler = (0.0, 0.0, 0.0)
+    bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
+
+def generate_circle(num_edges, local_pos, radius, rotation):
     sym_flag = False
     if(num_edges % 2 == 1):
         num_edges -= 1
     if(num_edges % 4 == 0):
         sym_flag = True
-    q1, q2, q3, q4 = []
+    q1, q2, q3, q4 = [], [], [], []
+    q2e, q4e = [], []
     degree_offset = 360/num_edges
-    q1.append(Point(0, 1, 0))
-    q3.append(Point(0, -1, 0))
+    q1.append(rad_to_point(0, radius, local_pos[2], rotation))
+    q3.append(rad_to_point(0, -radius, local_pos[2], rotation))
     if(sym_flag == True):
-        q2.append(Point(1, 0, 0))
-        q4.append(Point(-1, 0, 0))
-    for i in range(0, math.ciel(num_edges/4.0)-1):
+        q2e.append(Point(radius, 0, local_pos[2]))
+        q4e.append(Point(-radius, 0, local_pos[2]))
+    for i in range(0, math.ceil(num_edges/4.0)-1):
         curr_deg = (i+1)*degree_offset
-        q1p = rad_to_point(curr_deg)
+        q1p = rad_to_point(curr_deg, radius, local_pos[2], rotation)
         q1.append(q1p)
-        q2.append(Point(q1p.x, -q1p.y))
-        q3.append(Point(-q1p.x, -q1p.y))
-        q4.append(Point(-q1p.x, q1p.y))
-def cylinder_gen(name = "Cylinder", num_edges = 4, position = DEFAULT_POS, scale = DEFAULT_SCALE, rotation = DEFAULT_EUC):
-    faces = []
-    verts = []
-    generate_circle(num_edges, 0)
-    generate_circle(num_edges, 1)
+        q2.append(Point(q1p.x, -q1p.y, 2*local_pos[2] - q1p.z))
+        q3.append(Point(-q1p.x, -q1p.y, 2*local_pos[2] - q1p.z))
+        q4.append(Point(-q1p.x, q1p.y, q1p.z))
+    combined = q1 + q2e + q2[::-1] + q3 + q4e + q4[::-1]
+    combined = [(i.x + local_pos[0], i.y + local_pos[1], i.z) for i in combined]
+    return combined
 
-    
-    add_mesh(name, verts, faces)
+def cylinder_gen(name = "Cylinder", num_edges = 4, top_local_pos = DEFAULT_TOP_POS, top_radius = 1, bottom_radius = 1, top_rotation = 0, bottom_rotation = 0, object_metadata = Object_Metadata()):
+    faces = []
+    verts = [] 
+    bottom = generate_circle(num_edges, DEFAULT_POS, bottom_radius, bottom_rotation)
+    top = generate_circle(num_edges, top_local_pos, top_radius, top_rotation)
+    #print(len(bottom))
+    #print(len(top))
+    faces = [[i for i in range(len(bottom))]]
+    faces += [[i + len(bottom) for i in range(len(top))]]
+    faces += [[i, i+1 if i+1 != len(bottom) else 0, i+len(bottom) + 1 if i+1 != len(bottom) else len(bottom), i+len(bottom)] for i in range(len(bottom))]
+    verts = bottom
+    verts.extend(top)
+    cyl = add_mesh(name, verts, faces)
+    mutate_mesh(o_md=object_metadata)
+    return cyl
 
 def plane_gen(name = "Plane", num_edges = 4, position = DEFAULT_POS, scale = DEFAULT_SCALE, rotation = DEFAULT_EUC):
     verts = [(1, 1, 0), (1, -1, 0), (-1, 1, 0), (-1, -1, 0)]
