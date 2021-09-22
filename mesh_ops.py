@@ -70,7 +70,21 @@ def rad_to_point(deg, radius=1, height=0, rotation=0):
     y = math.cos(rotation)*y
     return Point(x, y, z)
 
-def stem_gen(name = "Stem", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1, gravity=.1, vel_cutoff = -.4, random_bool = False, seed = 0):
+def leaf_gen(name = "Leaf", definition = 20, width = 1):
+    pass
+
+def frond_gen(name = "Frond", num_edges = 8, base_radius = 0.2, length = 1, gravity = 0.1, leaf_density = 1, width_multiplier = 1, length_multiplier = 1):
+    
+    sub_stem_gen(name, num_edges, base_radius*.2, length, length/4.0, gravity, length/4.0, False, 0)
+    obj = bpy.data.objects[0]
+    return obj
+    
+
+
+def sub_stem_gen(name = "Stem", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1, gravity=.1, vel_cutoff = -.4, random_bool = False, seed = 0):
+    #values to return
+    
+
     if(seed == 0):
         random.seed()
     else:
@@ -86,6 +100,8 @@ def stem_gen(name = "Stem", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1
     count = 0
     rot = 0
     top_rad = base_radius
+
+    # brute force increment values
     while temp_vel > vel_cutoff:
         temp_vel -= gravity
         count+=1
@@ -96,6 +112,8 @@ def stem_gen(name = "Stem", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1
     rot_increment = max_rot/(count+1)
     scale_decrement = base_radius/(count+1)
     while vert_vel > vel_cutoff:
+
+        # point calculations
         point_list.append(Point(0, y_loc, z_loc))
         temp = [0, y_loc, z_loc]
         y_loc += hor_vel
@@ -105,15 +123,41 @@ def stem_gen(name = "Stem", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1
         top_rad = (top_rad - scale_decrement) if top_rad - scale_decrement > 0 else 0
         temp_rot = rot
         rot +=rot_increment
-        cyl = cylinder_gen("Cylinder", num_edges, [0-temp[0], y_loc-temp[1], z_loc-temp[2]], top_rad, base_rad, rot, temp_rot, Object_Metadata("Cylinder", temp, DEFAULT_EUC, DEFAULT_SCALE))
+        top_temp = [0-temp[0], y_loc-temp[1], z_loc-temp[2]]
+        
+        # stem cylinders
+        cyl = cylinder_gen("Cylinder", num_edges, top_temp, top_rad, base_rad, rot, temp_rot, Object_Metadata("Cylinder", temp, DEFAULT_EUC, DEFAULT_SCALE))
         cyl.select_set(False)
         cylinder_list.append(cyl)
+
+
     for cyl in cylinder_list:
         cyl.select_set(True)
     bpy.ops.object.join()
     bpy.context.scene.cursor.location = (0.0, 0.0, 0.0)
     bpy.context.scene.cursor.rotation_euler = (0.0, 0.0, 0.0)
     bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
+
+    return point_list, scale_decrement
+
+def stem_gen(name = "Stem", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1, gravity=.1, vel_cutoff = -.4, random_bool = False, seed = 0):
+    
+    point_list, scale_dec = sub_stem_gen(name, num_edges, base_radius, vert_vel, hor_vel, gravity, vel_cutoff, random_bool, seed)
+
+    # fronds
+    for i, point in enumerate(point_list[:-1]):
+        base_radius -= scale_dec
+        temp_point = [point.x, point.y, point.z]
+        next_point = [point_list[i+1].x, point_list[i+1].y, point_list[i+1].z]
+        frond_point = [v + (next_point[i] - v)/2.0 for i, v in enumerate(temp_point)]
+        frond_point[0] = base_radius * .9
+        frond_right = frond_gen("Frond_R", num_edges, base_radius, 1, .1, 1, 1, 1)
+        mutate_mesh(Object_Metadata("Frond_R", frond_point, [120, 180, 90], DEFAULT_SCALE))
+        frond_right.select_set(False)
+        frond_point[0] = -frond_point[0]
+        frond_left = frond_gen("Frond_L", num_edges, base_radius, 1, .1, 1, 1, 1)
+        mutate_mesh(Object_Metadata("Frond_L", frond_point, [-90, 0, 90], DEFAULT_SCALE))
+        frond_left.select_set(False)
 
 def generate_circle(num_edges, local_pos, radius, rotation):
     sym_flag = False

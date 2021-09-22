@@ -41,7 +41,6 @@ class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
         box1.prop(self, "num_cols")
         box1.prop(self, "height")
         box1.prop(self, "base_rad")
-        box1.prop(self, "bottom")
         box1.prop(self, "vert_vel")
         box1.prop(self, "hor_vel")
         box1.prop(self, "gravity")
