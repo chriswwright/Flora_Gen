@@ -1,12 +1,12 @@
 from . import mesh_ops
 import bpy
 
-class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
-    bl_idname = "wm.stem_operator"
-    bl_label = "Stem Operator"
+class FLORA_GEN_PT_FrondOperator(bpy.types.Operator):
+    bl_idname = "wm.frond_operator"
+    bl_label = "Frond Operator"
     location = "VIEW_3D"
     
-    name: bpy.props.StringProperty(name ="name", default = "Stem", maxlen = 100)
+    name: bpy.props.StringProperty(name ="name", default = "Frond", maxlen = 100)
     position: bpy.props.FloatVectorProperty(name = "Location")
     rotation: bpy.props.IntVectorProperty(name = "Rotation", min = -180, max = 180)
     scale: bpy.props.FloatVectorProperty(name = "Scale", default = (1.0, 1.0, 1.0))
@@ -18,18 +18,19 @@ class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
     hor_vel: bpy.props.FloatProperty(default = 1, name = "Horizontal Velocity")
     gravity: bpy.props.FloatProperty(default = .1, name = "Gravity")
     vel_cutoff: bpy.props.FloatProperty(default = -.4, name = "Velocity Cutoff")
-    frond_len: bpy.props.FloatProperty(default = 1, name = "Initial Frond Length")
+    frond_len: bpy.props.FloatProperty(default = 1.2, name = "Initial Frond Length")
+    leaf_width: bpy.props.FloatProperty(default = 0.2, name = "Initial Leaf Width")
+    leaf_len: bpy.props.FloatProperty(default = 0.5, name = "Initial Leaf Length")
     resolution: bpy.props.FloatProperty(default = 1, name = "Leaf Detail")
-    random: bpy.props.BoolProperty(default = True, name = "Randomize Values")
+    random: bpy.props.BoolProperty(default = False, name = "Randomize Values")
     seed: bpy.props.IntProperty(default = 0, name = "Seed: 0 sets to randomize")
-    random_weight: bpy.props.FloatProperty(default = 0.2, min = 0.0, max = 4.0, name = "Random Weight")
+    random_weight: bpy.props.FloatProperty(default = 0.2, min = 0.0, max = 4.0, name = "Weight of Randomizations")
     drift_bool: bpy.props.BoolProperty(default = True, name = "Enable Frond Drift") 
     drift_weight: bpy.props.FloatProperty(default = 0.2, name = "Drift Weight")
     expanded_0: bpy.props.BoolProperty(default = False)
     expanded_1: bpy.props.BoolProperty(default = False)
     expanded_2: bpy.props.BoolProperty(default = False)
-    #top_rotation: bpy.props.IntProperty(default = 0, name = "Top Rotation", max = 90, min = -90)
-    #bottom_rotation: bpy.props.IntProperty(default = 0, name = "Bottom Rotation", max = 90, min = -90)
+
 
     def invoke(self, context, event):
         wm = context.window_manager
@@ -66,6 +67,8 @@ class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
             box1.prop(self, "gravity")
             box1.prop(self, "vel_cutoff")
             box1.prop(self, "frond_len")
+            box1.prop(self, "leaf_width")
+            box1.prop(self, "leaf_len")
             box1.prop(self, "resolution")
 
         box2 = layout.box()
@@ -81,12 +84,12 @@ class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
             box2.prop(self, "random_weight")
             box2.prop(self, "drift_bool")
             box2.prop(self, "drift_weight")
-        
+            
     def execute(self, context):
        obj_data = mesh_ops.Object_Metadata(self.name, self.position, self.rotation, self.scale)
-       mesh_ops.stem_gen(name = self.name, num_edges=self.num_cols, base_radius=self.base_rad, vert_vel=self.vert_vel, hor_vel=self.hor_vel, resolution=self.resolution, gravity=self.gravity, vel_cutoff=self.vel_cutoff,  frond_len = self.frond_len, random_bool= self.random, seed=self.seed, random_weight=self.random_weight, drift_bool = self.drift_bool, drift_weight= self.drift_weight)
+       mesh_ops.frond_gen(name=self.name, num_edges=self.num_cols, base_radius=self.base_rad, length=self.frond_len, gravity=self.gravity, leaf_density=1, leaf_width = self.leaf_width, leaf_len=self.leaf_len, length_multiplier=1, resolution=self.resolution, random_bool=self.random, seed=self.seed, random_weight=self.random_weight, drift_bool=self.drift_bool, drift_weight=self.drift_weight)
        mesh_ops.apply_values(obj_data)
        return {'FINISHED'}
     
     def menu_func(self, context):
-        self.layout.operator(FLORA_GEN_PT_StemOperator.bl_idname)
+        self.layout.operator(FLORA_GEN_PT_FrondOperator.bl_idname)

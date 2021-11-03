@@ -1,35 +1,40 @@
 from . import mesh_ops
 import bpy
+#mutate chance
+#max len
+#base width
+#change weight
 
-class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
-    bl_idname = "wm.stem_operator"
-    bl_label = "Stem Operator"
+class FLORA_GEN_PT_StickOperator(bpy.types.Operator):
+    bl_idname = "wm.stick_operator"
+    bl_label = "Stick Operator"
     location = "VIEW_3D"
     
-    name: bpy.props.StringProperty(name ="name", default = "Stem", maxlen = 100)
+    name: bpy.props.StringProperty(name ="name", default = "Stick", maxlen = 100)
     position: bpy.props.FloatVectorProperty(name = "Location")
     rotation: bpy.props.IntVectorProperty(name = "Rotation", min = -180, max = 180)
     scale: bpy.props.FloatVectorProperty(name = "Scale", default = (1.0, 1.0, 1.0))
 
     num_cols: bpy.props.IntProperty(default = 8, name = "Number of sides",  max = 1024, min = 0)
-    height: bpy.props.FloatProperty(default = 1.0, name = "Height")
-    base_rad: bpy.props.FloatProperty(default = 0.5, name = "Base Radius", max = 10, min = 0)
-    vert_vel: bpy.props.FloatProperty(default = 2, name = "Vertical Velocity")
-    hor_vel: bpy.props.FloatProperty(default = 1, name = "Horizontal Velocity")
-    gravity: bpy.props.FloatProperty(default = .1, name = "Gravity")
-    vel_cutoff: bpy.props.FloatProperty(default = -.4, name = "Velocity Cutoff")
-    frond_len: bpy.props.FloatProperty(default = 1, name = "Initial Frond Length")
-    resolution: bpy.props.FloatProperty(default = 1, name = "Leaf Detail")
+    height: bpy.props.FloatProperty(default = .8, name = "Height")
+    base_rad: bpy.props.FloatProperty(default = 0.20, name = "Base Radius", max = 10, min = 0)
+    end_rad: bpy.props.FloatProperty(default = 0.02, name = "Tip Radius", max = 10, min = 0)
+    resolution: bpy.props.FloatProperty(default = 1.0, name = "Stick Resolution")
+
+    #stick specific
+    mutate_chance: bpy.props.FloatProperty(default = .4, min = 0, max = 1.0, name = "Split Chance")
+    max_perm: bpy.props.IntProperty(default = 20, min = 1, name = "Max Permutations")
+    degree_offset: bpy.props.IntProperty(default = 40, min = 0, max = 360, name = "Degree Offset")
+
+
     random: bpy.props.BoolProperty(default = True, name = "Randomize Values")
     seed: bpy.props.IntProperty(default = 0, name = "Seed: 0 sets to randomize")
-    random_weight: bpy.props.FloatProperty(default = 0.2, min = 0.0, max = 4.0, name = "Random Weight")
-    drift_bool: bpy.props.BoolProperty(default = True, name = "Enable Frond Drift") 
-    drift_weight: bpy.props.FloatProperty(default = 0.2, name = "Drift Weight")
+    random_weight: bpy.props.FloatProperty(default = 1.2, min = 0.0, max = 4.0, name = "Weight of Randomizations")
+
     expanded_0: bpy.props.BoolProperty(default = False)
     expanded_1: bpy.props.BoolProperty(default = False)
     expanded_2: bpy.props.BoolProperty(default = False)
-    #top_rotation: bpy.props.IntProperty(default = 0, name = "Top Rotation", max = 90, min = -90)
-    #bottom_rotation: bpy.props.IntProperty(default = 0, name = "Bottom Rotation", max = 90, min = -90)
+
 
     def invoke(self, context, event):
         wm = context.window_manager
@@ -61,12 +66,11 @@ class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
             box1.prop(self, "num_cols")
             box1.prop(self, "height")
             box1.prop(self, "base_rad")
-            box1.prop(self, "vert_vel")
-            box1.prop(self, "hor_vel")
-            box1.prop(self, "gravity")
-            box1.prop(self, "vel_cutoff")
-            box1.prop(self, "frond_len")
+            box1.prop(self, "end_rad")
             box1.prop(self, "resolution")
+            box1.prop(self, "mutate_chance")
+            box1.prop(self, "max_perm")
+            box1.prop(self, "degree_offset")
 
         box2 = layout.box()
         row2 = box2.row()
@@ -79,14 +83,24 @@ class FLORA_GEN_PT_StemOperator(bpy.types.Operator):
             box2.prop(self, "random")
             box2.prop(self, "seed")
             box2.prop(self, "random_weight")
-            box2.prop(self, "drift_bool")
-            box2.prop(self, "drift_weight")
-        
+
+            
     def execute(self, context):
-       obj_data = mesh_ops.Object_Metadata(self.name, self.position, self.rotation, self.scale)
-       mesh_ops.stem_gen(name = self.name, num_edges=self.num_cols, base_radius=self.base_rad, vert_vel=self.vert_vel, hor_vel=self.hor_vel, resolution=self.resolution, gravity=self.gravity, vel_cutoff=self.vel_cutoff,  frond_len = self.frond_len, random_bool= self.random, seed=self.seed, random_weight=self.random_weight, drift_bool = self.drift_bool, drift_weight= self.drift_weight)
-       mesh_ops.apply_values(obj_data)
-       return {'FINISHED'}
+        obj_data = mesh_ops.Object_Metadata(self.name, self.position, self.rotation, self.scale)
+        mesh_ops.stick_gen( name=self.name, 
+                            num_edges=self.num_cols, 
+                            height=self.height, 
+                            base_width=self.base_rad,
+                            end_width=self.end_rad,
+                            resolution=self.resolution, 
+                            mutate_chance=self.mutate_chance, 
+                            max_perm=self.max_perm, 
+                            degree_offset=self.degree_offset, 
+                            random_bool=self.random, 
+                            seed=self.seed, 
+                            random_weight=self.random_weight)
+        #mesh_ops.apply_values(obj_data)
+        return {'FINISHED'}
     
     def menu_func(self, context):
-        self.layout.operator(FLORA_GEN_PT_StemOperator.bl_idname)
+        self.layout.operator(FLORA_GEN_PT_StickOperator.bl_idname)

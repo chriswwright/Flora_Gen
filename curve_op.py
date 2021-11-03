@@ -1,9 +1,9 @@
 from . import mesh_ops
 import bpy
 
-class FLORA_GEN_PT_CylinderOperator(bpy.types.Operator):
-    bl_idname = "wm.cylinder_operator"
-    bl_label = "Cylinder Operator"
+class FLORA_GEN_PT_CurveOperator(bpy.types.Operator):
+    bl_idname = "wm.curve_operator"
+    bl_label = "Curve Operator"
     location = "VIEW_3D"
     
     name: bpy.props.StringProperty(name ="name", default = "Cylinder", maxlen = 100)
@@ -17,8 +17,7 @@ class FLORA_GEN_PT_CylinderOperator(bpy.types.Operator):
     bottom: bpy.props.FloatProperty(default = 1, name = "Bottom Radius", max = 10, min = 0)
     top_rotation: bpy.props.IntProperty(default = 0, name = "Top Rotation", max = 90, min = -90)
     bottom_rotation: bpy.props.IntProperty(default = 0, name = "Bottom Rotation", max = 90, min = -90)
-    rotate_axis: bpy.props.IntProperty(default = 0, name = "Rotate Axis", min = 0, max = 1)
-
+    present_radius: bpy.props.IntProperty(default = 20, name = "Present Radius", max = 360, min = 10)
     expanded_0: bpy.props.BoolProperty(default = False)
     expanded_1: bpy.props.BoolProperty(default = False)
 
@@ -55,13 +54,13 @@ class FLORA_GEN_PT_CylinderOperator(bpy.types.Operator):
             box1.prop(self, "bottom")
             box1.prop(self, "top_rotation")
             box1.prop(self, "bottom_rotation")
-            box1.prop(self, "rotate_axis")
+            box1.prop(self, "present_radius")
         
         
     def execute(self, context):
        obj_data = mesh_ops.Object_Metadata(self.name, self.position, self.rotation, self.scale)
-       mesh_ops.cylinder_gen(num_edges=self.num_cols, top_local_pos=self.top_loc_pos, top_radius=self.top, bottom_radius=self.bottom, top_rotation=self.top_rotation, bottom_rotation=self.bottom_rotation, object_metadata=obj_data, base_face = True, top_face = True, rotate_axis = self.rotate_axis)
+       mesh_ops.curve_gen(num_edges=self.num_cols, top_local_pos=self.top_loc_pos, top_radius=self.top, bottom_radius=self.bottom, top_rotation=self.top_rotation, bottom_rotation=self.bottom_rotation, degree_max = self.present_radius, object_metadata=obj_data)
        return {'FINISHED'}
     
     def menu_func(self, context):
-        self.layout.operator(FLORA_GEN_PT_CylinderOperator.bl_idname)
+        self.layout.operator(FLORA_GEN_PT_CurveOperator.bl_idname)
