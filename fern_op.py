@@ -12,7 +12,6 @@ class FLORA_GEN_PT_FernOperator(bpy.types.Operator):
     scale: bpy.props.FloatVectorProperty(name = "Scale", default = (1.0, 1.0, 1.0))
 
     num_cols: bpy.props.IntProperty(default = 8, name = "Number of sides",  max = 1024, min = 0)
-    height: bpy.props.FloatProperty(default = 1.0, name = "Height")
     base_rad: bpy.props.FloatProperty(default = 0.5, name = "Base Radius", max = 10, min = 0)
     vert_vel: bpy.props.FloatProperty(default = 2, name = "Vertical Velocity")
     hor_vel: bpy.props.FloatProperty(default = 1, name = "Horizontal Velocity")
@@ -20,13 +19,16 @@ class FLORA_GEN_PT_FernOperator(bpy.types.Operator):
     vel_cutoff: bpy.props.FloatProperty(default = -.4, name = "Velocity Cutoff")
     frond_len: bpy.props.FloatProperty(default = 1, name = "Initial Frond Length")
     resolution: bpy.props.FloatProperty(default = 1, name = "Leaf Detail")    
+    fern_radius: bpy.props.FloatProperty(default = 2, min = 0, max = 10, name = "Max Stalk Spawn Radius")
+    num_stalks: bpy.props.IntProperty(default = 3, min = 1, max = 12, name = "Number of Stalks")
+
     random: bpy.props.BoolProperty(default = True, name = "Randomize Values")
     seed: bpy.props.IntProperty(default = 0, name = "Seed: 0 sets to randomize")
     random_weight: bpy.props.FloatProperty(default = 0.2, min = 0.0, max = 4.0, name = "Weight of Randomizations")
     drift_bool: bpy.props.BoolProperty(default = True, name = "Enable Frond Drift") 
     drift_weight: bpy.props.FloatProperty(default = 0.2, name = "Drift Weight")
-    fern_radius: bpy.props.FloatProperty(default = 2, min = 0, max = 10, name = "Max Stalk Spawn Radius")
-    num_stalks: bpy.props.IntProperty(default = 3, min = 1, max = 12, name = "Number of Stalks")
+    
+    
     expanded_0: bpy.props.BoolProperty(default = False)
     expanded_1: bpy.props.BoolProperty(default = False)
     expanded_2: bpy.props.BoolProperty(default = False)
@@ -59,7 +61,6 @@ class FLORA_GEN_PT_FernOperator(bpy.types.Operator):
         row1.label(text="Flora Gen Properties")
         if(self.expanded_1):
             box1.prop(self, "num_cols")
-            box1.prop(self, "height")
             box1.prop(self, "base_rad")
             box1.prop(self, "vert_vel")
             box1.prop(self, "hor_vel")
@@ -67,6 +68,8 @@ class FLORA_GEN_PT_FernOperator(bpy.types.Operator):
             box1.prop(self, "vel_cutoff")
             box1.prop(self, "frond_len")
             box1.prop(self, "resolution")
+            box1.prop(self, "fern_radius")
+            box1.prop(self, "num_stalks")
 
         box2 = layout.box()
         row2 = box2.row()
@@ -81,8 +84,6 @@ class FLORA_GEN_PT_FernOperator(bpy.types.Operator):
             box2.prop(self, "random_weight")
             box2.prop(self, "drift_bool")
             box2.prop(self, "drift_weight")
-            box2.prop(self, "fern_radius")
-            box2.prop(self, "num_stalks")
         
     def execute(self, context):
        obj_data = mesh_ops.Object_Metadata(self.name, self.position, self.rotation, self.scale)

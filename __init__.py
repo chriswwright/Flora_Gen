@@ -48,6 +48,7 @@ from . rock_op import FLORA_GEN_PT_RockOperator
 
 #tile set
 from . grass_tile_op import FLORA_GEN_PT_Grass_Tile_Operator
+from . multi_tile_op import FLORA_GEN_PT_Multi_Tile_Operator
 
 classes = [ FLORA_GEN_PT_HelloWorldPanel, 
             FLORA_GEN_PT_FernPanel, 
@@ -63,7 +64,8 @@ classes = [ FLORA_GEN_PT_HelloWorldPanel,
             FLORA_GEN_PT_NoiseOperator, 
             FLORA_GEN_PT_RockOperator,
             FLORA_GEN_PT_Grass_Tile_Operator,
-            FLORA_GEN_PT_StickOperator]
+            FLORA_GEN_PT_StickOperator,
+            FLORA_GEN_PT_Multi_Tile_Operator]
 classes_strings = [ "FLORA_GEN_PT_HelloWorld", 
                     "FLORA_GEN_PT_Fern", 
                     "FLORA_GEN_PT_Grass", 
@@ -78,7 +80,8 @@ classes_strings = [ "FLORA_GEN_PT_HelloWorld",
                     "wm.noise_operator", 
                     "wm.rock_operator",
                     "wm.grass_tile_operator",
-                    "wm.stick_operator"]
+                    "wm.stick_operator",
+                    "wm.multi_tile_operator"]
 
 def register():
     for cls in classes:

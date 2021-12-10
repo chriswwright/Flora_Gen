@@ -90,6 +90,7 @@ class FLORA_GEN_PT_NoisePanel(bpy.types.Panel):
         box3.operator("wm.noise_operator")
         box3.operator("wm.rock_operator")
         box3.operator("wm.grass_tile_operator")
+        box3.operator("wm.multi_tile_operator")
     
     def invoke(self, context, event):
         wm = context.window_manager

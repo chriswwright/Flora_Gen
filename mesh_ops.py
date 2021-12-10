@@ -259,12 +259,12 @@ def leaf_gen(name = "Leaf", step_res = 1.0, length = 1, gravity = .1, width = .2
     leaf = add_mesh(name, verts, faces)
     return leaf
 
-
-def fern_gen(name = "Fern", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1, gravity=.1, vel_cutoff = -.4, frond_len = 1, resolution = 1.0, random_bool = False, seed = 0, random_weight = 1.0, drift_bool = False, drift_weight = 0.0, fern_radius = 1.0, num_stalks = 3):
+def fern_gen(name = "Fern", num_edges = 8, base_radius=.2, vert_vel=2, hor_vel=1, gravity=.1, vel_cutoff = -.4, frond_len = 1, resolution = 1.0, random_bool = False, seed = 0, random_weight = 1.0, drift_bool = False, drift_weight = 0.0, fern_radius = 1.0, num_stalks = 3, reseed = True):
     bpy.ops.object.select_all(action='DESELECT')   
     if seed == 0:
         seed = time.time()
-    random.seed(seed)
+    if(reseed == True):
+        random.seed(seed)
     stem_list = []
     cur_deg = 0
     for i in range(0, num_stalks):
@@ -532,13 +532,15 @@ def noise_gen(name = "Noise Plane", grid_len = 10, grid_width = 10, resolution =
 
 def rock_gen(name = "Rock", rock_radius = 5, resolution = 1, height_scalar = 1, num_rings = 5,
              h_scale = 3, lacunarity = 1, octaves = 2, offset = 1, x_shift = 0, y_shift = 0,
-             random_bool = False, seed = 0, random_weight = 1):
+             random_bool = False, seed = 0, random_weight = 1, reseed = True):
     bpy.ops.object.select_all(action='DESELECT')
     num_points = 4*resolution
     verts = []
     faces = []
-    if(random_bool == True and seed == 0):
+    if seed == 0:
         seed = time.time()
+    if(reseed == True):
+        random.seed(seed)
     if(random_bool == True):
         if(x_shift == 0):
             x_shift = time.time()*31%10000
@@ -559,7 +561,7 @@ def rock_gen(name = "Rock", rock_radius = 5, resolution = 1, height_scalar = 1, 
         'CELLNOISE')
     x_scalar = random.random()+.1
     y_scalar = random.random()+.1
-    rock_holder = [generate_circle(num_points, DEFAULT_POS, rock_radius*math.cos((math.pi * i * 0.5)/num_rings), 0) for i in range(0, num_rings)]
+    rock_holder = [generate_circle(num_points, DEFAULT_POS, rock_radius*math.cos((math.pi * i * 0.5)/num_rings), 0, 0) for i in range(0, num_rings)]
     rock_holder.append([(0, 0, rock_radius)])
     for i, ring in enumerate(rock_holder):
         for j, vert in enumerate(ring):
@@ -590,11 +592,12 @@ def rock_gen(name = "Rock", rock_radius = 5, resolution = 1, height_scalar = 1, 
     #          for y in range(int(y_traverse))]
     add_mesh(name, verts, faces)    
 
-def stick_gen( name = "Stick", num_edges = 4, height = 1, base_width = .4, end_width = .4, resolution = 1.0, mutate_chance = 0.2, max_perm = 20, degree_offset = 20, random_bool = False, seed = 0, random_weight = 1):
+def stick_gen( name = "Stick", num_edges = 4, height = 1, base_width = .4, end_width = .4, resolution = 1.0, mutate_chance = 0.2, max_perm = 20, degree_offset = 20, random_bool = False, seed = 0, random_weight = 1, reseed = True):
     bpy.ops.object.select_all(action='DESELECT')  
-    if(seed == 0):
+    if seed == 0:
         seed = time.time()
-    random.seed(seed)
+    if(reseed == True):
+        random.seed(seed)
     offset_scalar = random_weight / 3
     degree_offset = degree_offset
     euc_movement = [-90, 0, 0]
@@ -732,6 +735,7 @@ def grass_tile_gen( name = "Grass Tile", grid_len = 10, grid_width = 10, density
         obj = bpy.context.selected_objects[0]
         pool.append(obj)
         obj.select_set(False)
+
     #grass_gen(name = "Grass", num_edges=num_cols, base_radius=base_radius, vert_vel=vert_vel, hor_vel=hor_vel, gravity=gravity, vel_cutoff=vel_cutoff, grass_radius=grass_radius, resolution=detail, degree_max=degree_max, num_curve=num_curve)
     x_traverse = grid_width / spawn_offset
     y_traverse = grid_len / spawn_offset
@@ -756,11 +760,66 @@ def grass_tile_gen( name = "Grass Tile", grid_len = 10, grid_width = 10, density
             bpy.ops.transform.rotate(value=random.random()*2*math.pi, orient_axis='Z', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
             obj = bpy.context.selected_objects[0]
             obj.select_set(False)
-    
     for obj in pool:
         obj.select_set(True)
         bpy.ops.object.delete()
-    add_mesh(name, verts, faces) 
+    #add_mesh(name, verts, faces) 
+
+def multi_tile_gen( name = "Multi Tile", grid_len = 10, grid_width = 10, density = 1, spawn_offset = 1, selection_pool = 5,
+                    function_select = 0, al = [],
+                    h_scale = 3, lacunarity = 1, octaves = 2, offset = 1, shift_bool = False,
+                    x_shift = 0, y_shift = 0,
+                    random_bool = False, seed = 0, random_weight = 1, drift_bool = False, drift_weight = 0, reseed = True):
+    #kill case
+    if seed == 0:
+        seed = time.time()
+    if(reseed == True):
+        random.seed(seed)
+    if(shift_bool == True):
+        x_shift = (random.random()-.5)*20000
+        y_shift = (random.random()-.5)*20000
+    if(function_select < 1 or function_select > 4):
+        return 
+    pool = []
+    for i in range(selection_pool):
+        if(function_select == 1):
+            fern_gen(*al)
+        elif(function_select == 2):
+            grass_gen(*al)
+        elif(function_select == 3):
+            rock_gen(*al)
+        else:
+            stick_gen(*al)
+        obj = bpy.context.selected_objects[0]
+        pool.append(obj)
+        obj.select_set(False)
+    x_traverse = grid_width / spawn_offset
+    y_traverse = grid_len / spawn_offset
+    verts = [(x*spawn_offset - (grid_width/2), 
+             y*spawn_offset - (grid_len/2),
+             mathutils.noise.hetero_terrain(mathutils.Vector((x*0.1*spawn_offset + x_shift, y*0.1*spawn_offset + y_shift, 0.0)),
+                                            h_scale, 
+                                            lacunarity, 
+                                            octaves, 
+                                            offset))
+             for x in range(int(x_traverse))
+             for y in range(int(y_traverse))]
+    faces = []
+    i = 0
+    for vert in verts:
+        if vert[2] > 4/density:
+            i = (i + 1) % selection_pool
+            obj = pool[i]
+            obj.select_set(True)
+            bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(vert[0], vert[1], 0), "orient_type":'GLOBAL', "orient_matrix":((1, 0, 0), (0, 1, 0), (0, 0, 1)), "orient_matrix_type":'GLOBAL', "constraint_axis":(False, False, False), "mirror":True, "use_proportional_edit":False, "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "use_proportional_connected":False, "use_proportional_projected":False, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "cursor_transform":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False, "use_accurate":False, "use_automerge_and_split":False})
+            obj.select_set(False)
+            bpy.ops.transform.rotate(value=random.random()*2*math.pi, orient_axis='Z', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(False, False, True), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+            obj = bpy.context.selected_objects[0]
+            obj.select_set(False)
+    for obj in pool:
+        obj.select_set(True)
+        bpy.ops.object.delete()
+    #add_mesh(name, verts, faces) 
 
 def plane_gen(name = "Plane", num_edges = 4, position = DEFAULT_POS, scale = DEFAULT_SCALE, rotation = DEFAULT_EUC):
     verts = [(1, 1, 0), (1, -1, 0), (-1, 1, 0), (-1, -1, 0)]

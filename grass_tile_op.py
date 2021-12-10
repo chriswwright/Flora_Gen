@@ -161,7 +161,7 @@ class FLORA_GEN_PT_Grass_Tile_Operator(bpy.types.Operator):
                             random_weight= self.random_weight,
                             drift_bool= self.drift_bool,
                             drift_weight= self.drift_weight)
-        mesh_ops.apply_values(obj_data)
+        #mesh_ops.apply_values(obj_data)
         return {'FINISHED'}
     
     def menu_func(self, context):
